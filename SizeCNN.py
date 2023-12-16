@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 import numpy as np
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, random_split
 
 #device config
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') #choose whether to use gpu or cpu
@@ -16,16 +16,17 @@ batch_size = 1
 learning_rate = 0.0005
 
 # def get_data():
-data_dir = '/Users/chap/BrainTumorDetectionModel/Data' #path to data
+data_dir = 'C:\Users\Public\PartIIB project 2023_2024\Image collection without reaction\00AgNO3_mole_fraction\Outputs_Grayscale_Labelled_Images_Sizes\size_folder' #path to data
 
 transform = transforms.Compose(
 [transforms.ToTensor(),
 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])  #transforms data to tensor and normalizes it
 
-# train_set = datasets.ImageFolder(data_dir + '/train_set', transform=transform) #loads training data, need to figure out how to link image to labels, probably using the data files
-# test_set = datasets.ImageFolder(data_dir + '/test_set', transform=transform)
+# full_set = datasets.ImageFolder(data_dir, transform=transform) #loads training data, need to figure out how to link image to labels, probably using the data files
+# train_set, val_set, test_set = random_split(full_set, [int(len(full_set)*0.75), int(len(full_set)*0.15), int(len(full_set)*0.1)]) #splits data into training, validation and test sets
 
 train = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+val = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 test = DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
 class ConvNet(nn.Module): # note need to find out image size
