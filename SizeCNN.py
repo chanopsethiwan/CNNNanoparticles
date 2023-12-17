@@ -79,7 +79,7 @@ class ConvNet(nn.Module): # note need to find out image size
 model = ConvNet().to(device)
 
 # loss and optimizer
-criterion = nn.CrossEntropyLoss()
+criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 #training loop
@@ -93,6 +93,7 @@ for epoch in range(num_epochs):
 
         #forward
         outputs = model(images)
+        labels = labels.float()
         loss = criterion(outputs, labels)
 
         #backward
