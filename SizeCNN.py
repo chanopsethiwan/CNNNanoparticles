@@ -60,9 +60,13 @@ test = DataLoader(test_set, batch_size=batch_size, shuffle=False)
 class ConvNet(nn.Module): # note need to find out image size
     def __init__(self):
         super(ConvNet, self).__init__()
-        self.conv1 = nn.Conv2d(3,6,5) #in_channels, out_channels, kernel_size
-        self.pool = nn.MaxPool2d(5,5) #kernel_size, stride (shift x pixel to the right)
-        self.conv2 = nn.Conv2d(6, 16, 5) 
+        self.conv1 = nn.Conv2d(1,8,10, padding='same') #in_channels, out_channels, kernel_size
+        self.normalise1 = nn.BatchNorm2d(8)
+        # self.pool = nn.MaxPool2d(5,5) #kernel_size, stride (shift x pixel to the right)
+        self.pool1 = nn.AvgPool2d(10, stride=10)
+        self.conv2 = nn.Conv2d(8, 16, 10, padding='same')
+        self.normalise2 = nn.BatchNorm2d(16)
+        self.pool2 = nn.AvgPool2d(2, stride=2) 
         self.fc1 = nn.Linear(16*3*3, 120) # 5x5 is the size of the image after 2 conv layers, 16 is the number of channels, 120 is the number of nodes in the hidden layer
         self.fc2 = nn.Linear(120,84)
         self.fc3 = nn.Linear(84, 10)
@@ -86,8 +90,6 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 n_total_steps = len(train)
 for epoch in range(num_epochs):
     for i, (images, labels) in enumerate(train):
-        # 100, 1, 28, 28
-        # 100, 784
         images = images.to(device)
         labels = labels.to(device)
 
