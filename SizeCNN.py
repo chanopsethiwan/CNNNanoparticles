@@ -30,7 +30,7 @@ class CustomImageDataset(Dataset):
 
     def __getitem__(self, idx):
         img_name = os.path.join(self.root_dir, self.images[idx])
-        image = Image.open(img_name).convert('RGB')
+        image = Image.open(img_name)
 
         if self.transform:
             image = self.transform(image)
@@ -48,7 +48,7 @@ data_dir = r'C:\Users\Public\PartIIB project 2023_2024\Image collection without 
 
 transform = transforms.Compose(
 [transforms.ToTensor(),
-transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])  #transforms data to tensor and normalizes it
+transforms.Normalize((0.5), (0.5))])  #transforms data to tensor and normalizes it
 
 full_set = CustomImageDataset(root_dir=data_dir, transform=transform) #loads data from directory and applies transform
 train_set, val_set, test_set = random_split(full_set, [int(len(full_set)*0.75), int(len(full_set)*0.15), int(len(full_set)*0.100056)]) #splits data into training, validation and test sets
@@ -66,18 +66,26 @@ class ConvNet(nn.Module): # note need to find out image size
         self.pool1 = nn.AvgPool2d(10, stride=10)
         self.conv2 = nn.Conv2d(8, 16, 10, padding='same')
         self.normalise2 = nn.BatchNorm2d(16)
-        self.pool2 = nn.AvgPool2d(2, stride=2) 
-        self.fc1 = nn.Linear(16*3*3, 120) # 5x5 is the size of the image after 2 conv layers, 16 is the number of channels, 120 is the number of nodes in the hidden layer
-        self.fc2 = nn.Linear(120,84)
-        self.fc3 = nn.Linear(84, 10)
+        self.pool2 = nn.AvgPool2d(2, stride=2)
+        self.conv3 = nn.Conv2d(16, 32, 10, padding='same')
+        self.normalise3 = nn.BatchNorm2d(32) 
+        self.conv4 = nn.Conv2d(32, 32, 10, padding='same')
+        # self.fc1 = nn.Linear(16*3*3, 120) # 3x3 is the size of the image after 2 conv layers, 16 is the number of channels, 120 is the number of nodes in the hidden layer
+        # self.fc2 = nn.Linear(120,84)
+        # self.fc3 = nn.Linear(60, 1)
+        self.fc = nn.Linear(32*5*5, 1)
+        self.dropout = nn.Dropout(0.2)
+
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x))) 
-        x = self.pool(F.relu(self.conv2(x))) 
-        x = x.view(-1, 16*3*3)  #flatten
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = self.pool1(F.relu(self.normalise1(self.conv1(x)))) 
+        x = self.pool2(F.relu(self.normalise2(self.conv2(x)))) 
+        x = F.relu(self.normalise3(self.conv3(x)))
+        x = F.relu(self.normalise3(self.conv4(x)))
+        x = x.view(-1, 32*5*5)  #flatten
+        # x = F.relu(self.fc1(x))
+        # x = F.relu(self.fc2(x))
+        x = self.fc(x)
         return x
 
 model = ConvNet().to(device)
@@ -111,8 +119,7 @@ print("Finished Training")
 #test 
 #need to change testing to be based on continuous value
 with torch.no_grad(): # no need to calculate gradient
-    n_correct = 0
-    n_samples = 0
+    squared_difference = 0
     for images, labels in test:
         images = images.to(device)
         labels = labels.to(device)
@@ -120,9 +127,9 @@ with torch.no_grad(): # no need to calculate gradient
         
         #value, index
         _, predictions = torch.max(outputs, 1)
-        n_samples += labels.shape[0]
-        n_correct += (predictions == labels).sum().item()
+        squared_difference += (predictions - labels) ** 2
+    
+    rmse = torch.sqrt(squared_difference / len(test))
+    print(f'RMSE = {rmse}')
 
-    acc = 100.0 * n_correct/n_samples
-    print(f'accuracy = {acc}')
 #Data set is split into training and test sets (85% and 15%)
